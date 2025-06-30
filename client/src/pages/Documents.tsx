@@ -29,10 +29,9 @@ import { apiRequest } from "@/lib/queryClient";
 
 // Schema para o formulário de documento
 const documentFormSchema = z.object({
-  caseId: z.number().min(1, "Selecione um processo"),
+  caseId: z.string().min(1, "Selecione um processo"),
   name: z.string().min(1, "Nome é obrigatório"),
   type: z.string().min(1, "Tipo é obrigatório"),
-  filePath: z.string().optional(),
 });
 
 type DocumentFormData = z.infer<typeof documentFormSchema>;
@@ -41,6 +40,7 @@ export default function Documents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCase, setSelectedCase] = useState<string>("all");
   const [showNewDocumentModal, setShowNewDocumentModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -56,21 +56,39 @@ export default function Documents() {
   const form = useForm<DocumentFormData>({
     resolver: zodResolver(documentFormSchema),
     defaultValues: {
+      caseId: "",
       name: "",
       type: "",
-      filePath: "",
     },
   });
 
   const createDocumentMutation = useMutation({
-    mutationFn: async (data: DocumentFormData) => {
-      const response = await apiRequest('POST', '/api/documents', data);
+    mutationFn: async ({ data, file }: { data: DocumentFormData; file?: File }) => {
+      const formData = new FormData();
+      formData.append('caseId', data.caseId);
+      formData.append('name', data.name);
+      formData.append('type', data.type);
+      
+      if (file) {
+        formData.append('file', file);
+      }
+
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar documento');
+      }
+
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       setShowNewDocumentModal(false);
       form.reset();
+      setSelectedFile(null);
       toast({
         title: "Documento adicionado",
         description: "O documento foi cadastrado com sucesso.",
@@ -106,7 +124,7 @@ export default function Documents() {
   });
 
   const onSubmit = (data: DocumentFormData) => {
-    createDocumentMutation.mutate(data);
+    createDocumentMutation.mutate({ data, file: selectedFile || undefined });
   };
 
   // Filtrar documentos baseado na busca e caso selecionado
@@ -377,19 +395,22 @@ export default function Documents() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="filePath"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Caminho do Arquivo (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: /documentos/peticao_inicial.pdf" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Arquivo (Opcional)
+                </label>
+                <Input 
+                  type="file" 
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  className="cursor-pointer"
+                />
+                {selectedFile && (
+                  <p className="text-xs text-gray-500">
+                    Arquivo selecionado: {selectedFile.name}
+                  </p>
                 )}
-              />
+              </div>
 
               <div className="flex justify-end space-x-2 pt-4">
                 <Button

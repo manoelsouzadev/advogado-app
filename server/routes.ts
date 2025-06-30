@@ -1,8 +1,37 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import multer from "multer";
+import path from "path";
 import { storage } from "./storage";
 import { insertClientSchema, insertCaseSchema, insertActivitySchema, insertHearingSchema, insertDocumentSchema, insertFinancialSchema, insertCommunicationSchema } from "@shared/schema";
 import { z } from "zod";
+
+// Configuração do multer para upload de arquivos
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, './uploads/');
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  }),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Tipo de arquivo não permitido'));
+    }
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard
@@ -342,9 +371,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/documents", async (req, res) => {
+  app.post("/api/documents", upload.single('file'), async (req, res) => {
     try {
-      const validatedData = insertDocumentSchema.parse(req.body);
+      const { caseId, name, type } = req.body;
+      
+      const documentData = {
+        caseId: parseInt(caseId),
+        name,
+        type,
+        filePath: req.file ? req.file.path : null,
+      };
+
+      const validatedData = insertDocumentSchema.parse(documentData);
       const document = await storage.createDocument(validatedData);
       res.status(201).json(document);
     } catch (error) {
