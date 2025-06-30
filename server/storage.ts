@@ -45,6 +45,7 @@ export interface IStorage {
 
   // Documents
   getDocuments(caseId: number): Promise<Document[]>;
+  getAllDocuments(): Promise<Document[]>;
   createDocument(document: InsertDocument): Promise<Document>;
   deleteDocument(id: number): Promise<void>;
 
@@ -295,6 +296,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(documents)
       .where(eq(documents.caseId, caseId))
+      .orderBy(desc(documents.uploadedAt));
+  }
+
+  async getAllDocuments(): Promise<Document[]> {
+    return await db
+      .select()
+      .from(documents)
       .orderBy(desc(documents.uploadedAt));
   }
 

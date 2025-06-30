@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertClientSchema, insertCaseSchema, insertActivitySchema, insertHearingSchema, insertFinancialSchema, insertCommunicationSchema } from "@shared/schema";
+import { insertClientSchema, insertCaseSchema, insertActivitySchema, insertHearingSchema, insertDocumentSchema, insertFinancialSchema, insertCommunicationSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -319,6 +319,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Financial record deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete financial record" });
+    }
+  });
+
+  // Documents
+  app.get("/api/documents", async (req, res) => {
+    try {
+      const documents = await storage.getAllDocuments();
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  app.get("/api/cases/:caseId/documents", async (req, res) => {
+    try {
+      const caseId = parseInt(req.params.caseId);
+      const documents = await storage.getDocuments(caseId);
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  app.post("/api/documents", async (req, res) => {
+    try {
+      const validatedData = insertDocumentSchema.parse(req.body);
+      const document = await storage.createDocument(validatedData);
+      res.status(201).json(document);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create document" });
+    }
+  });
+
+  app.delete("/api/documents/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteDocument(id);
+      res.json({ message: "Document deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete document" });
     }
   });
 
