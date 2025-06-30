@@ -162,6 +162,8 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
 export const insertHearingSchema = createInsertSchema(hearings).omit({
   id: true,
   createdAt: true,
+}).extend({
+  date: z.string().datetime().transform((val) => new Date(val)).or(z.date()),
 });
 
 export const insertDocumentSchema = createInsertSchema(documents).omit({

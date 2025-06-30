@@ -39,12 +39,12 @@ export default function NewEventModal({ open, onOpenChange }: NewEventModalProps
     },
   });
 
-  const { data: cases = [] } = useQuery({
+  const { data: cases = [] } = useQuery<any[]>({
     queryKey: ["/api/cases"],
   });
 
   const createHearingMutation = useMutation({
-    mutationFn: async (data: InsertHearing) => {
+    mutationFn: async (data: any) => {
       const response = await apiRequest("POST", "/api/hearings", data);
       return response.json();
     },
@@ -68,7 +68,12 @@ export default function NewEventModal({ open, onOpenChange }: NewEventModalProps
   });
 
   const onSubmit = (data: InsertHearing) => {
-    createHearingMutation.mutate(data);
+    // Converter a data para ISO string se for um objeto Date
+    const submissionData = {
+      ...data,
+      date: data.date instanceof Date ? data.date.toISOString() : data.date
+    };
+    createHearingMutation.mutate(submissionData);
   };
 
   return (
@@ -172,7 +177,7 @@ export default function NewEventModal({ open, onOpenChange }: NewEventModalProps
                 <FormItem>
                   <FormLabel>Local</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Fórum Central - Sala 205" {...field} />
+                    <Input placeholder="Ex: Fórum Central - Sala 205" {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -189,7 +194,8 @@ export default function NewEventModal({ open, onOpenChange }: NewEventModalProps
                     <Textarea 
                       placeholder="Observações sobre a audiência..."
                       rows={3}
-                      {...field}
+                      value={field.value || ""}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />

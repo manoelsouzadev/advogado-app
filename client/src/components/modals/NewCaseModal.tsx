@@ -2,12 +2,30 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { insertCaseSchema, type InsertCase } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +52,10 @@ const actionTypeOptions = [
   { value: "Ação Administrativa", label: "Ação Administrativa" },
 ];
 
-export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) {
+export default function NewCaseModal({
+  open,
+  onOpenChange,
+}: NewCaseModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -47,7 +68,7 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
       actionType: "",
       plaintiff: "",
       defendant: "",
-      caseValue: undefined,
+      caseValue: 0,
       status: "ongoing",
       description: "",
       notes: "",
@@ -92,7 +113,7 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
         <DialogHeader>
           <DialogTitle>Cadastrar Novo Processo</DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -103,13 +124,16 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
                   <FormItem>
                     <FormLabel>Número do Processo</FormLabel>
                     <FormControl>
-                      <Input placeholder="0000000-00.0000.0.00.0000" {...field} />
+                      <Input
+                        placeholder="0000000-00.0000.0.00.0000"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="court"
@@ -142,7 +166,10 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Cliente</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    value={field.value?.toString()}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o cliente" />
@@ -150,7 +177,10 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
                     </FormControl>
                     <SelectContent>
                       {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id.toString()}>
+                        <SelectItem
+                          key={client.id}
+                          value={client.id.toString()}
+                        >
                           {client.name}
                         </SelectItem>
                       ))}
@@ -186,7 +216,7 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="caseValue"
@@ -194,10 +224,9 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
                   <FormItem>
                     <FormLabel>Valor da Causa</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="R$ 0,00" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      <Input
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -220,7 +249,7 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="defendant"
@@ -243,7 +272,7 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
                 <FormItem>
                   <FormLabel>Observações</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Observações adicionais sobre o processo..."
                       rows={3}
                       {...field}
@@ -267,7 +296,9 @@ export default function NewCaseModal({ open, onOpenChange }: NewCaseModalProps) 
                 disabled={createCaseMutation.isPending}
                 className="bg-legal-blue hover:bg-blue-700"
               >
-                {createCaseMutation.isPending ? "Criando..." : "Cadastrar Processo"}
+                {createCaseMutation.isPending
+                  ? "Criando..."
+                  : "Cadastrar Processo"}
               </Button>
             </div>
           </form>

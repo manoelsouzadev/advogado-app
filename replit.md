@@ -109,7 +109,12 @@ RESTful API endpoints organized by resource:
 
 ```
 Changelog:
-- June 30, 2025. Initial setup
+- June 30, 2025. Initial setup and migration from Replit Agent
+- June 30, 2025. Fixed DOM nesting error in Sidebar navigation
+- June 30, 2025. Implemented complete Calendar page with functional calendar view
+- June 30, 2025. Added comprehensive Reports page with charts and analytics
+- June 30, 2025. Fixed date validation error in hearing creation (datetime string conversion)
+- June 30, 2025. Enhanced database storage with getAllHearings method
 ```
 
 ## User Preferences
