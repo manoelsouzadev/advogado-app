@@ -331,7 +331,7 @@ export default function Documents() {
                   <FormItem>
                     <FormLabel>Processo</FormLabel>
                     <Select 
-                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      onValueChange={(value) => field.onChange(value)}
                       value={field.value?.toString()}
                     >
                       <FormControl>
