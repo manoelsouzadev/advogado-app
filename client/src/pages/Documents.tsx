@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { 
   FileText, 
   Upload, 
@@ -13,19 +15,32 @@ import {
   Trash2, 
   Eye,
   Filter,
-  Plus
+  Plus,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import type { Document, CaseWithClient } from "@shared/schema";
-// import NewDocumentModal from "@/components/modals/NewDocumentModal";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+
+// Schema para o formulário de documento
+const documentFormSchema = z.object({
+  caseId: z.number().min(1, "Selecione um processo"),
+  name: z.string().min(1, "Nome é obrigatório"),
+  type: z.string().min(1, "Tipo é obrigatório"),
+  filePath: z.string().optional(),
+});
+
+type DocumentFormData = z.infer<typeof documentFormSchema>;
 
 export default function Documents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCase, setSelectedCase] = useState<string>("all");
-  // const [showNewDocumentModal, setShowNewDocumentModal] = useState(false);
+  const [showNewDocumentModal, setShowNewDocumentModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -35,6 +50,39 @@ export default function Documents() {
 
   const { data: cases = [] } = useQuery<CaseWithClient[]>({
     queryKey: ["/api/cases"],
+  });
+
+  // Form para adicionar documento
+  const form = useForm<DocumentFormData>({
+    resolver: zodResolver(documentFormSchema),
+    defaultValues: {
+      name: "",
+      type: "",
+      filePath: "",
+    },
+  });
+
+  const createDocumentMutation = useMutation({
+    mutationFn: async (data: DocumentFormData) => {
+      const response = await apiRequest('POST', '/api/documents', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      setShowNewDocumentModal(false);
+      form.reset();
+      toast({
+        title: "Documento adicionado",
+        description: "O documento foi cadastrado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao adicionar documento",
+        description: "Não foi possível cadastrar o documento. Tente novamente.",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteDocumentMutation = useMutation({
@@ -56,6 +104,10 @@ export default function Documents() {
       });
     },
   });
+
+  const onSubmit = (data: DocumentFormData) => {
+    createDocumentMutation.mutate(data);
+  };
 
   // Filtrar documentos baseado na busca e caso selecionado
   const filteredDocuments = documents.filter((doc) => {
@@ -105,12 +157,7 @@ export default function Documents() {
           <p className="mt-1 text-sm text-gray-500">Gerencie documentos e anexos dos processos</p>
         </div>
         <Button 
-          onClick={() => {
-            toast({
-              title: "Funcionalidade em desenvolvimento",
-              description: "O upload de documentos será implementado em breve.",
-            });
-          }}
+          onClick={() => setShowNewDocumentModal(true)}
           className="bg-legal-blue hover:bg-blue-700"
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -251,7 +298,119 @@ export default function Documents() {
         </CardContent>
       </Card>
 
-      {/* Modal temporariamente removido - será implementado em breve */}
+      {/* Modal para adicionar documento */}
+      <Dialog open={showNewDocumentModal} onOpenChange={setShowNewDocumentModal}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Documento</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="caseId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Processo</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      value={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um processo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {cases.map((caseItem) => (
+                          <SelectItem key={caseItem.id} value={caseItem.id.toString()}>
+                            {caseItem.processNumber} - {caseItem.client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome do Documento</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Petição Inicial" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Petição">Petição</SelectItem>
+                        <SelectItem value="Contestação">Contestação</SelectItem>
+                        <SelectItem value="Recurso">Recurso</SelectItem>
+                        <SelectItem value="Sentença">Sentença</SelectItem>
+                        <SelectItem value="Contrato">Contrato</SelectItem>
+                        <SelectItem value="Procuração">Procuração</SelectItem>
+                        <SelectItem value="Certidão">Certidão</SelectItem>
+                        <SelectItem value="Comprovante">Comprovante</SelectItem>
+                        <SelectItem value="Outros">Outros</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="filePath"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Caminho do Arquivo (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: /documentos/peticao_inicial.pdf" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewDocumentModal(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createDocumentMutation.isPending}
+                  className="bg-legal-blue hover:bg-blue-700"
+                >
+                  {createDocumentMutation.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
