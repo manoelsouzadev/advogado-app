@@ -49,6 +49,7 @@ export default function NewEventModal({ open, onOpenChange }: NewEventModalProps
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/hearings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/hearings/today"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({

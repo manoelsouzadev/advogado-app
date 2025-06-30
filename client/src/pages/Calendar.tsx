@@ -16,15 +16,32 @@ export default function Calendar() {
 
   const { data: hearings = [], isLoading } = useQuery<Hearing[]>({
     queryKey: ["/api/hearings"],
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   // Filtrar audiências para a data selecionada
-  const selectedDateHearings = hearings.filter((hearing: Hearing) => 
-    isSameDay(new Date(hearing.date), selectedDate)
-  );
+  const selectedDateHearings = hearings.filter((hearing: Hearing) => {
+    const hearingDate = new Date(hearing.date);
+    const selectedYear = selectedDate.getFullYear();
+    const selectedMonth = selectedDate.getMonth();
+    const selectedDay = selectedDate.getDate();
+    
+    const hearingYear = hearingDate.getFullYear();
+    const hearingMonth = hearingDate.getMonth();
+    const hearingDay = hearingDate.getDate();
+    
+    return selectedYear === hearingYear && 
+           selectedMonth === hearingMonth && 
+           selectedDay === hearingDay;
+  });
 
   // Datas que têm audiências (para destacar no calendário)
-  const datesWithHearings = hearings.map((hearing: Hearing) => new Date(hearing.date));
+  const datesWithHearings = hearings.map((hearing: Hearing) => {
+    const hearingDate = new Date(hearing.date);
+    // Normalizar para apenas a data (sem horário)
+    return new Date(hearingDate.getFullYear(), hearingDate.getMonth(), hearingDate.getDate());
+  });
 
   return (
     <div className="space-y-6">
@@ -91,6 +108,7 @@ export default function Calendar() {
               <div className="text-center text-gray-500 py-8">
                 <CalendarIcon className="mx-auto h-8 w-8 mb-2 opacity-50" />
                 <p>Nenhuma audiência agendada para esta data</p>
+                <p className="text-xs mt-2">Total de audiências: {hearings.length}</p>
               </div>
             ) : (
               <div className="space-y-3">
