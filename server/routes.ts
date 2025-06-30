@@ -210,6 +210,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/hearings", async (req, res) => {
+    try {
+      const hearings = await storage.getAllHearings();
+      res.json(hearings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch hearings" });
+    }
+  });
+
   app.get("/api/hearings/today", async (req, res) => {
     try {
       const hearings = await storage.getTodayHearings();

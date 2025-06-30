@@ -37,6 +37,7 @@ export interface IStorage {
 
   // Hearings
   getHearings(caseId: number): Promise<Hearing[]>;
+  getAllHearings(): Promise<Hearing[]>;
   getTodayHearings(): Promise<Hearing[]>;
   createHearing(hearing: InsertHearing): Promise<Hearing>;
   updateHearing(id: number, hearing: Partial<InsertHearing>): Promise<Hearing>;
@@ -241,6 +242,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(hearings)
       .where(eq(hearings.caseId, caseId))
+      .orderBy(asc(hearings.date));
+  }
+
+  async getAllHearings(): Promise<Hearing[]> {
+    return await db
+      .select()
+      .from(hearings)
       .orderBy(asc(hearings.date));
   }
 

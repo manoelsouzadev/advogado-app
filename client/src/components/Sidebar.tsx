@@ -67,18 +67,17 @@ export default function Sidebar() {
             
             return (
               <li key={item.name}>
-                <Link href={item.href}>
-                  <a
-                    className={cn(
-                      "flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                      isActive
-                        ? "text-legal-blue bg-blue-50"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    )}
-                  >
-                    <Icon className="mr-3 h-5 w-5" />
-                    {item.name}
-                  </a>
+                <Link 
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                    isActive
+                      ? "text-legal-blue bg-blue-50"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  )}
+                >
+                  <Icon className="mr-3 h-5 w-5" />
+                  {item.name}
                 </Link>
               </li>
             );
